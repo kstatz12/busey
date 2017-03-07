@@ -24,6 +24,3 @@ platform: Any CPU
 
 # build Configuration, i.e. Debug, Release, etc.
 configuration: Release
-
-before_build:
-  - nuget restore
