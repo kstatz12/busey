@@ -10,7 +10,7 @@ branches:
   
 build:
   parallel: true                  # enable MSBuild parallel builds
-  project: src/Busey.sln      # path to Visual Studio solution or project
+  project: Busey.sln      # path to Visual Studio solution or project
   
 image: Visual Studio 2015
 
