@@ -8,6 +8,9 @@ branches:
     - master
     - development
   
+before_build:
+  - nuget restore
+
 build:
   parallel: true                  # enable MSBuild parallel builds
   project: Busey.sln      # path to Visual Studio solution or project
