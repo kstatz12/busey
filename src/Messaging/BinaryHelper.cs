@@ -18,6 +18,17 @@ namespace Busey.Messaging
                 bf.Serialize(ms, obj);
                 return ms.ToArray();
             }
-        } 
+        }
+
+        public static T ToMessage<T>(this byte[] obj)
+        {
+            var bf = new BinaryFormatter();
+            using (var ms = new MemoryStream(obj))
+            {
+                var message = bf.Deserialize(ms);
+
+                return (T) message;
+            }
+        }
     }
 }

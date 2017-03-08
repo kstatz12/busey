@@ -13,7 +13,7 @@ namespace Busey.Bus
         private IConnection _connection;
         private IModel _channel;
 
-        private readonly List<Tuple<Type, Func<IModel, EventingBasicConsumer>>> _handlers;
+        private readonly List<Tuple<string, Func<IModel, EventingBasicConsumer>>> _handlers;
         private readonly ConnectionFactory _factory;
 
         public RabbitMqBus(RabbitHost host)
@@ -25,18 +25,23 @@ namespace Busey.Bus
                 UserName = rabbitHost.Username,
                 Password = rabbitHost.Password
             };
-            _handlers = new List<Tuple<Type, Func<IModel, EventingBasicConsumer>>>();
+            _connection = _factory.CreateConnection();
+            _channel = _connection.CreateModel();
+            _handlers = new List<Tuple<string, Func<IModel, EventingBasicConsumer>>>();
         }
 
         public void Start()
         {
-            _connection = _factory.CreateConnection();
-            _channel = _connection.CreateModel();
-        }
+            var handlers = _handlers;
 
-        public List<Tuple<Type, Func<IModel, EventingBasicConsumer>>> GetHandlers()
-        {
-            return _handlers;
+            //call basicconsume on all the consumers that were registered in previous steps, if any
+            foreach (var handler in handlers)
+            {
+                if (_connection.IsOpen)
+                {
+                    _channel.BasicConsume(handler.Item1, true, handler.Item2(_channel));
+                }
+            }
         }
 
         public void Dispose()
@@ -100,6 +105,7 @@ namespace Busey.Bus
         public void RegisterCommandHandler<T>(Action<T> handle, ushort prefetchCount = 1) where T : ICommand
         {
             var queueName = typeof(T).ToQueue();
+            InitQueue(queueName);
             InitQos(prefetchCount);
             Func<IModel, EventingBasicConsumer> commandConsumer = (channel) =>
             {
@@ -112,16 +118,13 @@ namespace Busey.Bus
                 };
                 return consumer;
             };
-            if (_connection != null)
-            {
-                _channel.BasicConsume(queueName, false, commandConsumer(_channel));
-            }
-            _handlers.Add(new Tuple<Type, Func<IModel, EventingBasicConsumer>>(typeof(T), commandConsumer));
+            _handlers.Add(new Tuple<string,Func<IModel, EventingBasicConsumer>>(queueName,commandConsumer));
         }
 
         public void RegisterEventHandler<T>(Action<T> handle, ushort prefetchCount = 1) where T : IEvent
         {
             var queueName = typeof(T).ToQueue();
+            InitQueue(queueName);
             InitQos(prefetchCount);
             Func<IModel, EventingBasicConsumer> eventConsumer = (channel) =>
             {
@@ -134,13 +137,7 @@ namespace Busey.Bus
                 };
                 return consumer;
             };
-            if (_connection != null)
-            {
-                _channel.BasicConsume(queueName, false, eventConsumer(_channel));
-            }
-
-            _handlers.Add(new Tuple<Type, Func<IModel, EventingBasicConsumer>>(typeof(T), eventConsumer));
-
+            _handlers.Add(new Tuple<string, Func<IModel, EventingBasicConsumer>>(queueName, eventConsumer));
         }
 
         private void InitQueue(string queueName)

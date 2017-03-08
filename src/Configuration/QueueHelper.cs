@@ -6,12 +6,12 @@ namespace Busey.Configuration
     {
         public static string ToQueue(this Type input)
         {
-            return $"q.{input.FullName}";
+            return $"q.{input.Name}";
         }
 
         public static string ToTopic(this Type input)
         {
-            return $"t.{input.FullName}";
+            return $"t.{input.Name}";
         }
     }
 }

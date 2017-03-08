@@ -13,7 +13,6 @@ namespace Busey.Configuration
         {
             _hostSettings = host;
             _bus = new RabbitMqBus(_hostSettings);
-            _bus.Start();
             return this;
         }
 
@@ -26,6 +25,12 @@ namespace Busey.Configuration
         public BusBootstrapper WithEventHandler<T>(IEventHandler<T> handler) where T : IEvent
         {
             _bus.RegisterEventHandler<T>(handler.Handle);
+            return this;
+        }
+
+        public BusBootstrapper Start()
+        {
+            _bus.Start();
             return this;
         }
 

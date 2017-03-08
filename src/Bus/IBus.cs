@@ -10,7 +10,6 @@ namespace Busey.Bus
     public interface IBus : IDisposable
     {
         void Start();
-        List<Tuple<Type, Func<IModel, EventingBasicConsumer>>> GetHandlers();
         void Send(ICommand command);
         void Publish(IEvent @event);
         void RegisterCommandHandler<T>(Action<T> handler, ushort prefetchCount = 1) where T : ICommand;
